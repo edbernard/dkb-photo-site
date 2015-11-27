@@ -1,0 +1,100 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    dependencies {
+       classpath 'net.sourceforge.fmpp:fmpp:0.9.15+'
+       classpath 'com.google.javascript:closure-compiler:v20140730+'
+    }
+}
+
+group = "com.jdbernard"
+version = "1.0.0"
+
+def siteConfigFile = new File('site.properties')
+def siteConfig = new Properties()
+
+task init(
+    group: 'build',
+    description: "Initialize the builder's properties and configuration.") {
+    siteConfigFile.withInputStream { is -> siteConfig.load(is) }
+}
+
+task clean(
+    group: 'build',
+    description: 'Deletes all intermediate files.',
+    type: Delete) {
+    delete 'build'
+}
+
+task incVersion(
+    group: 'build',
+    description: 'Increment the site minor verison number.') << {
+
+    int nextMinorVersion = siteConfig['version.minor'] as int;
+    siteConfig['version.minor'] = (nextMinorVersion + 1) as String
+    siteConfigFile.withOutputStream { os -> siteConfig.save(os, ""); }
+}
+
+task compileHtml(
+    group: 'build',
+    description: 'Compile HTML templates into rendered output.',
+    dependsOn: init) << {
+
+    ant.taskdef(name: 'fmpp', classname:'fmpp.tools.AntTask',
+        classpath: project.buildscript.configurations.classpath.asPath) 
+
+    ant.fmpp(sourceRoot: "template/html", outputRoot: "build/webroot",
+        excludes: "**/*.sw?") {
+
+        data("""version: ${project.version}""")
+    }
+}
+
+task build(
+    group: 'build',
+    description: 'Assemble the final output.',
+    dependsOn: [compileHtml, incVersion]) << {
+
+    new File("data-${siteConfig['version.major']}.${siteConfig['version.minor']}.json")
+        .text = new groovy.json.JsonBuilder(
+            buildCategory(new File(siteConfig['root.dir']))).toPrettyString()
+}
+
+task upload(
+    group: 'deploy',
+    description: '',
+    dependsOn: build) << {
+
+}
+
+
+ext.buildCategory = { File dir ->
+    File descFile = new File(dir, "description.txt")
+    return [
+        name: dir.name,
+        description: descFile.exists() ? descFile.text : "",
+        subcategories: dir.listFiles()
+            .collect { return it.isDirectory() ? buildCategory(it) : null }
+            .findAll(),
+        pictures: dir.listFiles()
+            .collect { return it.isDirectory() ? null : buildPicture(it) }
+            .findAll()
+    ]
+}
+
+ext.buildPicture = { File picFile ->
+    if (picFile.name == "description.txt") return null
+    def nameParts = (picFile.name.replaceAll(/\.\w+$/, '').split('!')).reverse() as LinkedList
+    def picture = [
+        filename: picFile.name,
+        commonName: nameParts.poll() ?: "",
+        scientificName: nameParts.poll() ?: "",
+        originalFileName: nameParts.poll() ?: "",
+        order: nameParts.poll() ?: ""
+    ]
+
+    return picture
+}
