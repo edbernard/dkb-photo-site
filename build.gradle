@@ -58,9 +58,9 @@ task build(
     description: 'Assemble the final output.',
     dependsOn: [compileHtml, incVersion]) << {
 
-    new File("data-${siteConfig['version.major']}.${siteConfig['version.minor']}.json")
-        .text = new groovy.json.JsonBuilder(
-            buildCategory(new File(siteConfig['root.dir']))).toPrettyString()
+    def rootCategory = buildCategory(new File(siteConfig['root.dir']))
+
+
 }
 
 task upload(
