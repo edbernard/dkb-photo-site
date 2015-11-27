@@ -1,0 +1,15 @@
+{
+  "name": "dkb-photo-site",
+  "version": "1.0.0",
+  "description": "David K. Bernard's Nature Photography Site",
+  "main": "index.html",
+  "dependencies": {
+    "microbox": "^3.0.8"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jonathan Bernard",
+  "license": "ISC"
+}
