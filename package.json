@@ -11,5 +11,9 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jonathan Bernard",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "_git@git.jdb-labs.com:jdb/dkb-photo-site.git"
+  }
 }
