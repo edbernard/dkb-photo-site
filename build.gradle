@@ -2,24 +2,34 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven { url 'http://oss.sonatype.org/content/groups/public/' }
+        jcenter()
     }
 
     dependencies {
        classpath 'net.sourceforge.fmpp:fmpp:0.9.15+'
        classpath 'com.google.javascript:closure-compiler:v20140730+'
+       classpath 'org.yaml:snakeyaml:1.17-SNAPSHOT'
+       classpath 'com.monochromeroad.gradle-plugins:gradle-aws-s3-sync:0.10-SNAPSHOT'
     }
 }
+
+import org.yaml.snakeyaml.Yaml
+import com.monochromeroad.gradle.plugin.aws.s3.S3Sync
 
 group = "com.jdbernard"
 version = "1.0.0"
 
 def siteConfigFile = new File('site.properties')
-def siteConfig = new Properties()
+def yaml = new Yaml()
+def siteConfig
 
 task init(
     group: 'build',
     description: "Initialize the builder's properties and configuration.") {
-    siteConfigFile.withInputStream { is -> siteConfig.load(is) }
+    siteConfigFile.withInputStream { is -> siteConfig = yaml.load(is) }
+
+    ['build/webroot/css', 'build/webroot/js'].each { new File(it).mkdirs() }
 }
 
 task clean(
@@ -33,9 +43,8 @@ task incVersion(
     group: 'build',
     description: 'Increment the site minor verison number.') << {
 
-    int nextMinorVersion = siteConfig['version.minor'] as int;
-    siteConfig['version.minor'] = (nextMinorVersion + 1) as String
-    siteConfigFile.withOutputStream { os -> siteConfig.save(os, ""); }
+    siteConfig.version.minor++;
+    siteConfigFile.withOutputStream { os -> yaml.dump(siteConfig, os) }
 }
 
 task compileHtml(
@@ -53,14 +62,42 @@ task compileHtml(
     }
 }
 
+task assemble(
+    group: 'build',
+    description: 'Assembles the resources needed for the site.',
+    dependsOn: init,
+    type: Copy) {
+
+    from('template') {
+        include "**/*.css"
+        include "**/*.js"
+    }
+
+    into 'build/webroot'
+}
+
 task build(
     group: 'build',
     description: 'Assemble the final output.',
-    dependsOn: [compileHtml, incVersion]) << {
+    dependsOn: [assemble, compileHtml, incVersion]) << {
 
-    def rootCategory = buildCategory(new File(siteConfig['root.dir']))
+    def rootCategory = buildCategory(new File(siteConfig.albumsDirectory))
 
+}
 
+task s3upload(
+    group: 'deploy',
+    description: 'Upload site to Amazon S3 for service.',
+    dependsOn: build,
+    type: S3Sync) {
+
+    //accessKey awsAccessKey
+    //secretKey awsSecretKey
+
+    //configFile "jets3t.properties"
+
+    from "build/webroot"
+    into "david.jdbernard.com"
 }
 
 task upload(
