@@ -1,3 +1,5 @@
 *.sw?
 build/
 .gradle/
+.sass-cache/
+template/css/*.css
