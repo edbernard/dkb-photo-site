@@ -38,6 +38,14 @@ $ultraWideScreen: 1600px;
 $headFont:"Oswald";
 $bodyFont:"PT Sans Narrow";
 
+//$darkColor:#333;
+//$medDarkColor:#555;
+//$lightColor:#9BD;
+
+$darkColor:#3F3D38;
+$medDarkColor:#5F5858;
+$lightColor:#CFBFB0;
+
 html, body {
     background-color: white;
     font-family: $bodyFont, sans-serif;
@@ -46,15 +54,15 @@ html, body {
 }
 
 header {
-    background: #333;
-    border-left: 0.5em solid #555;
-    border-right: 0.5em solid #555;  
+    background: $darkColor;
+    border-left: 0.5em solid $medDarkColor;
+    border-right: 0.5em solid $medDarkColor;  
     box-shadow: inset 0 0 5px 2px #222;
-    color: #9bd;
+    color: $lightColor;
     padding: 1rem;
 
     hr {
-        background-color: #444;
+        background-color: $medDarkColor;
         border: none;
         height: 1px;
         margin: 2rem 0 2rem 0;
