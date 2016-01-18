@@ -30,3 +30,17 @@ Structure For Traversal
 
 _fold in category properties from the
 properties file_
+
+
+Pseudocode For Traversal
+----------------------------------------
+
+* Mark root directory.
+* Load root configuration.
+* Traverse directories starting with the
+  root and build the node tree:
+
+  - Load this directory's configuration.
+  - Build the list of files with their
+    metadata.
+  - Recurse into subdirectories.
