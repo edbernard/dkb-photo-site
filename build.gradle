@@ -10,23 +10,24 @@ buildscript {
        classpath 'net.sourceforge.fmpp:fmpp:0.9.15+'
        classpath 'com.google.javascript:closure-compiler:v20140730+'
        classpath 'org.yaml:snakeyaml:1.17-SNAPSHOT'
-       classpath 'com.monochromeroad.gradle-plugins:gradle-aws-s3-sync:0.10-SNAPSHOT'
+       classpath 'commons-codec:commons-codec:1.10'
+       //classpath 'com.monochromeroad.gradle-plugins:gradle-aws-s3-sync:0.10-SNAPSHOT'
     }
 }
 
 import org.yaml.snakeyaml.Yaml
-import com.monochromeroad.gradle.plugin.aws.s3.S3Sync
+//import com.monochromeroad.gradle.plugin.aws.s3.S3Sync
 
 group = "com.jdbernard"
 version = "1.0.0"
 
-def siteConfigFile = new File('site.properties')
+def siteConfigFile = new File('site-configuration.yaml')
 def yaml = new Yaml()
 def siteConfig
 
 task init(
     group: 'build',
-    description: "Initialize the builder's properties and configuration.") {
+    description: "Initialize the builder's properties and configuration.") << {
     siteConfigFile.withInputStream { is -> siteConfig = yaml.load(is) }
 
     ['build/webroot/css', 'build/webroot/js'].each { new File(it).mkdirs() }
@@ -85,7 +86,7 @@ task build(
 
 }
 
-task s3upload(
+/*task s3upload(
     group: 'deploy',
     description: 'Upload site to Amazon S3 for service.',
     dependsOn: build,
@@ -98,40 +99,11 @@ task s3upload(
 
     from "build/webroot"
     into "david.jdbernard.com"
-}
+}*/
 
 task upload(
     group: 'deploy',
     description: '',
     dependsOn: build) << {
 
-}
-
-
-ext.buildCategory = { File dir ->
-    File descFile = new File(dir, "description.txt")
-    return [
-        name: dir.name,
-        description: descFile.exists() ? descFile.text : "",
-        subcategories: dir.listFiles()
-            .collect { return it.isDirectory() ? buildCategory(it) : null }
-            .findAll(),
-        pictures: dir.listFiles()
-            .collect { return it.isDirectory() ? null : buildPicture(it) }
-            .findAll()
-    ]
-}
-
-ext.buildPicture = { File picFile ->
-    if (picFile.name == "description.txt") return null
-    def nameParts = (picFile.name.replaceAll(/\.\w+$/, '').split('!')).reverse() as LinkedList
-    def picture = [
-        filename: picFile.name,
-        commonName: nameParts.poll() ?: "",
-        scientificName: nameParts.poll() ?: "",
-        originalFileName: nameParts.poll() ?: "",
-        order: nameParts.poll() ?: ""
-    ]
-
-    return picture
 }
