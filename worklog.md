@@ -13,3 +13,20 @@ Remaining To Do
   names).
 
 * Configuration for server/upload.
+
+Structure For Traversal
+----------------------------------------
+
+    String visit(rootNode, currentNode)
+
+    Node: {
+      parent: Node,
+      title: String,
+      description: String,
+      subcategories: Node[],
+      files: PhotoNode,
+      relativePathToRoot: String
+    }
+
+_fold in category properties from the
+properties file_
