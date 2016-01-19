@@ -84,6 +84,14 @@ header {
             color: #eee;
             text-decoration: none;
         }
+
+        li.selected {
+          background-color: $lightColor;
+          margin: 0 -0.5rem;
+          padding: 0 0.5rem;
+
+          a { color: $darkColor; }
+        }
     }
 
     div.about { margin-bottom: 1rem; }
@@ -92,16 +100,16 @@ header {
 section {
     padding: 1rem;
 
-    div.category-preview {
+    div.category-preview, div.image-preview {
         display: inline-block;  
         margin: 0 1rem 1rem 1rem;
 
-        .category-name, .common-name {
+        .category-name, .common-name, .scientific-name {
             display: block;
             text-align: center
         }
 
-        .category-name {
+        .category-name, .scientific-name {
             font-family: $headFont;
             font-size: 115%;
             font-weight: 300;
@@ -133,7 +141,7 @@ h1, h2, h3, h4 {
     section {
         margin-left: 20rem;
 
-        div.category-preview {
+        div.category-preview, div.image-preview {
             height: calc(180px + 3rem);
             width: 180px;
 
@@ -157,7 +165,7 @@ h1, h2, h3, h4 {
     section {
         border-top: solid thin black;
 
-        .category-preview {
+        .category-preview, div.image-preview {
             max-width: 180px;
             min-width: 120px;
             min-height: calc(120px + 3rem);
