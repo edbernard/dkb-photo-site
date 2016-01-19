@@ -7,16 +7,19 @@ buildscript {
     }
 
     dependencies {
-       classpath 'net.sourceforge.fmpp:fmpp:0.9.15+'
        classpath 'com.google.javascript:closure-compiler:v20140730+'
        classpath 'org.yaml:snakeyaml:1.17-SNAPSHOT'
-       classpath 'commons-codec:commons-codec:1.10'
        classpath 'com.google.guava:guava:19.0+'
+       classpath 'com.jdbernard:simple-groovy-server:2.0'
        //classpath 'com.monochromeroad.gradle-plugins:gradle-aws-s3-sync:0.10-SNAPSHOT'
     }
 }
 
+import java.util.regex.Pattern
 import org.yaml.snakeyaml.Yaml
+import com.jdbernard.dkbphotosite.Category as SiteCategory
+import com.jdbernard.dkbphotosite.SiteBuilder
+import com.jdbernard.net.GroovyDirectoryServer
 //import com.monochromeroad.gradle.plugin.aws.s3.S3Sync
 
 group = "com.jdbernard"
@@ -25,11 +28,18 @@ version = "1.0.0"
 def siteConfigFile = new File('site-configuration.yaml')
 def yaml = new Yaml()
 def siteConfig
+def rootCategory
 
 task init(
     group: 'build',
     description: "Initialize the builder's properties and configuration.") << {
+
+    println "Initializing build system."
     siteConfigFile.withInputStream { is -> siteConfig = yaml.load(is) }
+
+    // Recompute dynamic properties.
+    siteConfig.imageFilenamePattern = Pattern.compile(/(?i)^.+\.(/ +
+        siteConfig.imageFileExtensions.join('|') + /)$/)
 
     ['build/webroot/css', 'build/webroot/js'].each { new File(it).mkdirs() }
 }
@@ -39,6 +49,7 @@ task clean(
     description: 'Deletes all intermediate files.',
     type: Delete) {
     delete 'build'
+    delete 'buildSrc/build'
 }
 
 task incVersion(
@@ -49,19 +60,31 @@ task incVersion(
     siteConfigFile.withOutputStream { os -> yaml.dump(siteConfig, os) }
 }
 
+task loadRootCategory(
+    group: 'build',
+    description: 'Read and parse the image/category data from album storage.',
+    dependsOn: init) << {
+
+    println "Parsing image and category data..."
+    rootCategory = new SiteCategory(
+        siteConfig, new File(siteConfig.albumsDirectory), null)
+}
+
+task thumbnails(
+    group: 'build',
+    description: 'Create thumbnails for the image files.',
+    dependsOn: loadRootCategory) << {
+
+}
+
 task compileHtml(
     group: 'build',
     description: 'Compile HTML templates into rendered output.',
-    dependsOn: init) << {
+    dependsOn: [loadRootCategory, thumbnails]) << {
 
-    ant.taskdef(name: 'fmpp', classname:'fmpp.tools.AntTask',
-        classpath: project.buildscript.configurations.classpath.asPath) 
-
-    ant.fmpp(sourceRoot: "template/html", outputRoot: "build/webroot",
-        excludes: "**/*.sw?") {
-
-        data("""version: ${project.version}""")
-    }
+    def siteBuilder = new SiteBuilder(
+        new FileReader(siteConfig.pageTemplate), siteConfig)
+    siteBuilder.buildPages(new File('build/webroot'), rootCategory)
 }
 
 task assemble(
@@ -78,14 +101,29 @@ task assemble(
     into 'build/webroot'
 }
 
-task build(
+task preview(
     group: 'build',
-    description: 'Assemble the final output.',
-    dependsOn: [assemble, compileHtml, incVersion]) << {
+    description: 'Build the site and run a preview locally.',
+    dependsOn: [compileHtml, assemble]) << {
 
-    def rootCategory = buildCategory(new File(siteConfig.albumsDirectory))
+    System.setProperty("org.eclipse.jetty.LEVEL", "INFO")
+    def server = GroovyDirectoryServer.runJetty([
+        mappedPaths: [
+            ['/', 'build/webroot'],
+            ['/images/*', siteConfig.albumsDirectory]],
+        rewriteRules: [
+            ["/(.+)\\.(${siteConfig.imageFileExtensions.join('|')})\$", "/images/\$1.\$2"]],
+        port: 9001
+    ])
 
+    println "\n\n"
+    println ">  The local preview is now available at http://localhost:9001"
+    println ">  Press enter key to stop..."
+    println ""
+    System.in.read()
+    server.stop()
 }
+
 
 /*task s3upload(
     group: 'deploy',
@@ -105,6 +143,6 @@ task build(
 task upload(
     group: 'deploy',
     description: '',
-    dependsOn: build) << {
+    dependsOn: [compileHtml, assemble]) << {
 
 }

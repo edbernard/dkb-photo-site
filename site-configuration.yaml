@@ -1,6 +1,7 @@
-albumsDirectory: '/home/jdbernard/temp/dkb-site/album-root'
+albumsDirectory: '/home/jdbernard/temp/album-root'
 imageFileExtensions: ['png', 'jpg', 'svg', 'jpeg', 'gif', 'tiff']
 thumbnailSize: [180, 180]
+pageTemplate: 'template/html/index.html'
 version:
     minor: 0
     major: 1
@@ -15,3 +16,6 @@ description: >
     several galleries of other locations. To see all the galleries, scroll down
     the home page, select from the categories at left, or select from the pages
     at top.
+# The following is auto-generated from the above and doesn't need to be edited
+# manually
+imageFilenamePattern: ''

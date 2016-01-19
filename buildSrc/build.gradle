@@ -1,0 +1,11 @@
+repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+   compile 'commons-codec:commons-codec:1.10'
+   compile 'com.google.guava:guava:19.0+'
+   compile 'net.coobird:thumbnailator:[0.4, 0.5)'
+}
