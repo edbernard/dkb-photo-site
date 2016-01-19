@@ -1,5 +1,6 @@
 albumsDirectory: '/home/jdbernard/temp/dkb-site/album-root'
 imageFileExtensions: ['png', 'jpg', 'svg', 'jpeg', 'gif', 'tiff']
+thumbnailSize: [180, 180]
 version:
     minor: 0
     major: 1

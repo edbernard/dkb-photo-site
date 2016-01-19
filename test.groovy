@@ -1,7 +1,6 @@
 import com.jdbernard.dkbphotosite.*
 import org.yaml.snakeyaml.Yaml
 import java.util.regex.Pattern
-import groovy.text.SimpleTemplateEngine
 
 yaml = new Yaml()
 
@@ -15,5 +14,4 @@ rootDir = new File(config.albumsDirectory)
 
 rootCat = new Category(config, rootDir, null)
 
-engine = new SimpleTemplateEngine()
-template = engine.createTemplate(new File('../template/html/index.html'))
+siteBuilder = new SiteBuilder(new FileReader('../template/html/index.html'), config)

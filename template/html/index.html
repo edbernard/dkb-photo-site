@@ -1,4 +1,4 @@
-<% escaper = com.google.common.net.UrlEscapers.urlFragmentEscaper() %>
+<% escaper = com.google.common.net.UrlEscapers.urlPathSegmentEscaper() %>
 <!DOCTYPE html>
 <html>
     <head>
@@ -24,7 +24,7 @@
             <h3>Categories</h3>
             <ul><% category.root.subcategories.each { topLevelCat -> %>
                 <li class="${category.isDescendantOf(topLevelCat) ?  'selected' : ''}" >
-                    <a href="${topLevelCat.name}/">${topLevelCat.name}</a></li>
+                    <a href="/${escaper.escape(topLevelCat.name)}/">${topLevelCat.name}</a></li>
             <% } %></ul>
         </nav>
         <hr>
@@ -40,5 +40,9 @@
     <% } %></section>
 
     <section><% category.images.each { image -> %>
+        <div class=image-preview><a href="${escaper.escape(image.filename)}">
+            <img src="${escaper.escape(image.filename)}">
+            <span class=common-name>${image.commonName}</span>
+            <span class=scientific-name>${image.scientificName}</span>
     <% } %></section>
 </html>
