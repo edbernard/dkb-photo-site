@@ -1,11 +1,10 @@
+<% escaper = com.google.common.net.UrlEscapers.urlFragmentEscaper() %>
 <!DOCTYPE html>
 <html>
     <head>
         <meta charset=utf-8>
         <meta name=viewport content="width=device-width, initial-scale=1">
-        <title>David K. Bernard - Nature Photogrphs ...
-               Wildflowers, Wildlife, Trees, Fungi, Insects, Spiders
-               (C) 2008-2016</title>
+        <title>${category.parent ? category.name : siteConfig.title}</title>
 
         <link rel=stylesheet href=/css/microbox.css />
         <link rel=stylesheet href=/css/dkb-photo-site.css />
@@ -15,46 +14,31 @@
         <h1>David Bernard</h1>
         <nav>
             <hr>
-            <h3>Categories</h3>
-            <ul>
-                <li><a href="Acanthaceae (Wild Petunia)/">Acanthaceae (Wild Petunia)</a></li>
-                <li><a href="Agavaceae (Century Plant)/">Agavaceae (Century Plant)</a></li>
-                <li><a href="Alismataceae (Arrowhead)/">Alismataceae (Arrowhead)</a></li>
-            </ul>
-            <hr>
             <h3>Pages</h3>
             <ul>
                 <li class=selected><a href="/">Home</a></li>
                 <!-- Could be extended to add links to markdown-generated static
                      pages here. -->
             </ul>
+            <hr>
+            <h3>Categories</h3>
+            <ul><% category.root.subcategories.each { topLevelCat -> %>
+                <li class="${category.isDescendantOf(topLevelCat) ?  'selected' : ''}" >
+                    <a href="${topLevelCat.name}/">${topLevelCat.name}</a></li>
+            <% } %></ul>
         </nav>
         <hr>
-        <div class=about>
-            Amateur nature photos of wildlife, wildflowers, trees, fungi, insects, and
-            spiders by David K. Bernard, (c) 2004-2016. The primary focus is Austin,
-            Texas, with most photos taken at or near the Bernards’ home. There are also
-            several galleries of other locations. To see all the galleries, scroll down
-            the home page, select from the categories at left, or select from the pages
-            at top.
-        </div>
+        <div class=about>${siteConfig.description}</div>
     </header>
 
-    <section>
-        <div class=category-preview>
-            <img src="/images/Acanthaceae (Wild Petunia)/001!1AmerWaterWillow.jpg!Justicia americana!American Water-willow.jpg">
-            <span class=category-name>Acanthaceae</span>
-            <span class=common-name>(Wild Petunia)</span>
-        </div>
-        <div class=category-preview>
-            <img src="/images/Agavaceae (Century Plant)/001!9HCenturyPlant.jpg!Agave havardiana!Havard's Century Plant.jpg">
-            <span class=category-name>Agavaceae</span>
-            <span class=common-name>(Century Plant)</span>
-        </div>
-        <div class=category-preview>
-            <img src="/images/Alismataceae (Arrowhead)/000!20CArrowhead.jpg!Sagittaria latifola!Common Arrowhead.jpg">
-            <span class=category-name>Alismataceae</span>
-            <span class=common-name>(Arrowhead)</span>
-        </div>
-    </section>
+    <section><% category.subcategories.findAll { it.images }.each { subcat -> %>
+        <div class=category-preview><a href="${escaper.escape(subcat.name)}/">
+            <img src="${escaper.escape(subcat.name)}/${escaper.escape(subcat.images[0].filename)}">
+            <span class=category-name>${subcat.name}</span>
+            <!--<span class=common-name>subcat.commonName-->
+        </a></div>
+    <% } %></section>
+
+    <section><% category.images.each { image -> %>
+    <% } %></section>
 </html>

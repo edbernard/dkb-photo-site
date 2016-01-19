@@ -53,6 +53,8 @@ html, body {
     padding: 0;
 }
 
+body { position: relative; }
+
 header {
     background: $darkColor;
     border-left: 0.5em solid $medDarkColor;
