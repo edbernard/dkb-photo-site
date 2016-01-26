@@ -6,6 +6,9 @@ Remaining To Do
 ----------------------------------------
 
 * Create and use image thumbnails.
+* Finish styling the pages.
+* Add lightbox (microbox)
+* Configuration for server/upload.
 
 * Switch away from file-based metadata.
   Too many troubles with URL escaping.
@@ -14,10 +17,6 @@ Remaining To Do
   new content. Check file hashes and
   rename files that have only changed
   names).
-
-* Configuration for server/upload.
-* Finish styling the pages.
-* Add lightbox (microbox)
 
 * Package for Dad:
 
