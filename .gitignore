@@ -4,3 +4,5 @@ build/
 .sass-cache/
 template/css/*.css
 *.class
+node_modules/
+export.properties
