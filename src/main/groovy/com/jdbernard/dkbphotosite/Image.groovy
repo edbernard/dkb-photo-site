@@ -1,42 +1,59 @@
 package com.jdbernard.dkbphotosite
 
+import javax.swing.tree.TreeNode
 import org.apache.commons.codec.digest.DigestUtils
 import groovy.beans.Bindable
 
 @Bindable
 public class Image {
 
-    public Category parent
-    public File file
-    public String filename
-    public String commonName
-    public String scientificName
-    public String originalFileName
-    public String order
-    public String md5Hex
+  public Category parent
+  public File file
+  public String filename
+  public String commonName
+  public String scientificName
+  public String md5Hex
+  public TreeNode treeNode
 
-    public static Image newWithMetaInFilename(File imageFile, Category parent) {
-      def nameParts = (imageFile.name.replaceAll(/\.\w+$/, '').split('!'))
-        .reverse() as LinkedList
+  @Deprecated public String originalFileName
+  @Deprecated public String order
 
-      return new Image(
-        parent: parent,
-        file: imageFile,
-        filename: imageFile.name,
-        commonName: nameParts.poll() ?: "",
-        scientificName: nameParts.poll() ?: "",
-        originalFileName: nameParts.poll() ?: "",
-        order: nameParts.poll() ?: "",
-        md5Hex: imageFile.withInputStream { DigestUtils.md5Hex(it) })
-    }
+  @Deprecated
+  public static Image newWithMetaInFilename(File imageFile, Category parent) {
+    def nameParts = (imageFile.name.replaceAll(/\.\w+$/, '').split('!'))
+      .reverse() as LinkedList
 
-    public String toString() {
-      StringBuilder sb = new StringBuilder()
+    return new Image(
+      parent: parent,
+      file: imageFile,
+      filename: imageFile.name,
+      commonName: nameParts.poll() ?: "",
+      scientificName: nameParts.poll() ?: "",
+      originalFileName: nameParts.poll() ?: "",
+      order: nameParts.poll() ?: "",
+      md5Hex: imageFile.withInputStream { DigestUtils.md5Hex(it) })
+  }
 
-      sb.append(order ?: "")
-      if (order && (scientificName || commonName)) sb.append(": ")
-      sb.append(scientificName ?: "")
-      if ((order || scientificName) && commonName) sb.append(" - ")
-      sb.append(commonName ?: "")
-    }
+  public static Image fromStorageForm(def storedForm, Category parent) {
+    return new Image(
+      parent: parent,
+      commonName: storedForm.commonName,
+      scientificName: storedForm.scientificName,
+      md5Hex: storedForm.md5Hex)
+  }
+
+  public def toStorageForm() {
+    return [
+      commonName: this.commonName,
+      scientificName: this.scientificName,
+      md5Hex: this.md5Hex ]
+  }
+
+  public String toString() {
+    StringBuilder sb = new StringBuilder()
+
+    sb.append(scientificName ?: "")
+    if (scientificName && commonName) sb.append(" - ")
+    sb.append(commonName ?: "")
+  }
 }

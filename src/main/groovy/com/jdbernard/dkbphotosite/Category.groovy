@@ -1,61 +1,101 @@
 package com.jdbernard.dkbphotosite
 
+import javax.swing.tree.TreeNode
 import groovy.beans.Bindable
 
 @Bindable
 public class Category {
 
-    public def siteConfig
-    public Category root
-    public Category parent = null
-    public String name
-    public String description
-    public String relativePathToRoot
+  public def siteConfig
+  public Category root
+  public Category parent = null
+  public String name
+  public String description
+  public String relativePathToRoot
+  public TreeNode treeNode
 
-    public List<Category> subcategories = []
-    public List<Image> images = []
+  public List<Category> subcategories = []
+  public List<Image> images = []
 
-    public static Category newWithMetaInDirname(def siteConfig, File dir,
-      Category parent) {
+  @Deprecated
+  public static Category newWithMetaInDirname(def siteConfig, File dir,
+    Category parent) {
 
-      File descFile = new File(dir, "description.txt")
+    File descFile = new File(dir, "description.txt")
 
-      Category cat = new Category(
-        siteConfig: siteConfig,
-        parent: parent,
-        name: dir.name,
-        description: descFile.exists() ? descFile.text : "",
-        relativePathToRoot: (parent?.relativePathToRoot ?: "") + "../")
+    Category cat = new Category(
+      siteConfig: siteConfig,
+      parent: parent,
+      name: dir.name,
+      description: descFile.exists() ? descFile.text : "",
+      relativePathToRoot: (parent?.relativePathToRoot ?: "") + "../")
 
-      cat.root = parent ? parent.root : cat
+    cat.root = parent ? parent.root : cat
 
-      cat.images = dir.listFiles(
-        { f -> !f.isDirectory() && f.name ==~ siteConfig.imageFilenamePattern }
-          as FileFilter)
-        .collect { Image.newWithMetaInFilename(it, cat) }
+    cat.images = dir.listFiles(
+      { f -> !f.isDirectory() && f.name ==~ siteConfig.imageFilenamePattern }
+        as FileFilter)
+      .collect { Image.newWithMetaInFilename(it, cat) }.sort { it.order }
 
-      cat.subcategories = dir.listFiles( { f -> f.isDirectory() } as FileFilter)
-          .collect { Category.newWithMetaInDirname(siteConfig, it, cat) }
+    cat.subcategories = dir.listFiles( { f -> f.isDirectory() } as FileFilter)
+        .collect { Category.newWithMetaInDirname(siteConfig, it, cat) }
 
-      return cat
-    }
+    return cat
+  }
 
-    public boolean isDescendantOf(Category cat) {
-      for (def cur = this; cur != null; cur = cur.parent) {
-        if (cur == cat) return true; }
-      return false;
-    }
+  public static Category fromStorageForm(def siteConfig, def storedForm,
+    Category parent) {
 
-    public String toString() {
-      StringBuilder sb = new StringBuilder()
-      sb.append(this.name)
+    Category cat = new Category(
+      siteConfig: siteConfig,
+      parent: parent,
+      name: storedForm.name,
+      description: storedForm.description,
+      relativePathToRoot: (parent?.relativePathToRoot ?: "") + "../")
 
-      if (subcategories || images) sb.append(": ")
-      if (subcategories) sb.append(subcategories.size()).append(" subcategories")
-      if (subcategories && images) sb.append(" & ")
-      if (images) sb.append(images.size()).append(" images")
+    cat.images = storedForm.images.collect { Image.fromStorageForm(it, cat) }
 
-      return sb.toString()
-    }
+    cat.subcategories = storedForm.subcategories.collect {
+      Category.fromStorageForm(siteConfig, it, cat) }
+
+    return cat
+  }
+
+  public def toStorageForm() {
+    return [
+      name: this.name,
+      description: this.description,
+      images: this.images.collect { it.toStorageForm() },
+      subcategories: this.subcategories.collect { it.toStorageForm() }]
+  }
+
+  public Category findCategory(String categoryName) {
+    if (this.name == categoryName) return this
+    if (this.subcategories.size() == 0) return null
+    return this.subcategories.collect { it.findCategory(categoryName) }.find()
+  }
+
+  public Image findImage(String md5Hex) {
+    return this.images.find { it.md5Hex == md5Hex } ?:
+      this.subcategories.collect { it.findImage(md5Hex) }.find()
+  }
+
+  public boolean isDescendantOf(Category cat) {
+    for (def cur = this; cur != null; cur = cur.parent) {
+      if (cur == cat) return true; }
+    return false;
+  }
+
+  public String toString() {
+    StringBuilder sb = new StringBuilder()
+    sb.append(this.name)
+
+    if (subcategories || images) sb.append(": ")
+    if (subcategories) sb.append(subcategories.size()).append(" subcategories")
+    if (subcategories && images) sb.append(" & ")
+    if (images) sb.append(images.size()).append(" images")
+
+    return sb.toString()
+  }
 
 }
