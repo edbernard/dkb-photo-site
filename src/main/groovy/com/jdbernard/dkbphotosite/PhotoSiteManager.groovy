@@ -2,15 +2,21 @@ package com.jdbernard.dkbphotosite
 
 import ca.odell.glazedlists.BasicEventList
 import ca.odell.glazedlists.swing.AutoCompleteSupport
+import com.jcraft.jsch.JSch
+import com.jcraft.jsch.ChannelExec
+import com.jcraft.jsch.ChannelSftp
+import com.jcraft.jsch.Session
 import com.jdbernard.util.LightOptionParser
+import com.jdblabs.file.treediff.TreeDiff
+import com.jdblabs.file.treediff.DirAnalysis
 import groovy.beans.Bindable
 import groovy.io.FileType
 import groovy.swing.SwingBuilder
 import java.awt.CardLayout
 import java.awt.Color
+import java.awt.event.KeyEvent
 import java.awt.GridBagConstraints as GBC
 import java.awt.KeyboardFocusManager
-import java.awt.event.KeyEvent
 import java.util.regex.Pattern
 import javax.imageio.ImageIO
 import javax.swing.JButton
@@ -19,8 +25,8 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JSplitPane
 import javax.swing.JTextArea
-import javax.swing.JTextPane
 import javax.swing.JTextField
+import javax.swing.JTextPane
 import javax.swing.JTree
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
@@ -34,12 +40,14 @@ import org.yaml.snakeyaml.Yaml
 
 public class PhotoSiteManager {
 
-  public static final String VERSION = "1.0"
+  public static final String VERSION = "1.0.0"
 
   private static final Yaml yaml = new Yaml()
 
   def config
   File imageDatabaseFile
+  SiteBuilder siteBuilder
+  JSch jsch = new JSch()
 
   // GUI Data (Model)
   @Bindable Category rootCategory
@@ -76,7 +84,7 @@ public class PhotoSiteManager {
   // Category card elements
   JTextArea categoryDescriptionTA
 
-  enum MsgType { Success, Error, Normal }
+  enum MsgType { Success, Error, Normal, Warning }
 
   public static void main(String[] args) {
     def cli = [
@@ -123,8 +131,18 @@ public class PhotoSiteManager {
     initGui()
     show()
 
+    File templateFile = new File(config.pageTemplate)
+    if (!templateFile.exists()) {
+      showMessage("Unable to find the page template file (configured as " +
+        "'${config.pageTemplate}').\nPreview and publish functionality will " +
+        "not work without a valid page template.", MsgType.Error) }
+
+    this.siteBuilder = new SiteBuilder(new FileReader(templateFile), config)
+
     config.imageFilenamePattern = Pattern.compile(/(?i)^.+\.(/ +
       config.imageFileExtensions.join('|') + /)$/)
+
+    this.jsch.addIdentity(config.server.identityFile)
 
     if (seedFromFilesystem) {
       imageDatabaseFile.createNewFile()
@@ -141,7 +159,7 @@ public class PhotoSiteManager {
 
       showMessage("Scanning images under ${config.albumsDirectory} for new " +
         "or changed files...")
-      scanImages()
+      imagesByMd5 = scanImages()
     }
 
     updateTreeRoot()
@@ -154,7 +172,7 @@ public class PhotoSiteManager {
     new File(config.albumsDirectory).eachFileRecurse(FileType.FILES) { f ->
       if (!(f.name ==~ config.imageFilenamePattern)) return
 
-      // Get the has of the file
+      // Get the hash of the file
       String md5Hex = f.withInputStream { DigestUtils.md5Hex(it) }
 
       // Try to find an image entry for that hash
@@ -192,11 +210,14 @@ public class PhotoSiteManager {
   private def initGui() {
 
     successMsgStyle = new SimpleAttributeSet()
+    warnMsgStyle = new SimpleAttributeSet()
     errorMsgStyle = new SimpleAttributeSet()
 
     StyleConstants.setForeground(successMsgStyle, Color.BLUE);
+    StyleConstants.setForeground(warnMsgStyle, Color.ORANGE);
     StyleConstants.setForeground(errorMsgStyle, Color.RED);
     StyleConstants.setBold(successMsgStyle, true);
+    StyleConstants.setBold(warnMsgStyle, true);
     StyleConstants.setBold(errorMsgStyle, true);
 
     // Build main frame
@@ -319,6 +340,8 @@ public class PhotoSiteManager {
   }
 
   // GUI Actions (Controller)
+
+  /// Given a image category, get the TreeNode that represents it in the UI.
   private DefaultMutableTreeNode categoryToNode(Category cat) {
     DefaultMutableTreeNode node = new DefaultMutableTreeNode(cat)
     cat.treeNode = node
@@ -353,6 +376,7 @@ public class PhotoSiteManager {
       def style = null
       switch (msgType) {
         case MsgType.Success: style = successMsgStyle; break
+        case MsgType.Warning: style = warnMsgStyle; break
         case MsgType.Error: style = errorMsgStyle; break
         default: break
       }
@@ -407,6 +431,42 @@ Missing image file:
     else selectCategory(currentCategory)
   }
 
+  private void showPreview() {
+
+    TreeDiff treediff = new TreeDiff(in: System.in, out: System.out, quiet: true)
+
+    File stagingDir = new File(config.stagingDirectory)
+    showMessage("Generating preview: writing to '${stagingDir.canonicalPath}'")
+
+    // TODO: working here (cleanup when done)
+    // 1. Create staging directory if needed.
+    if (!stagingDir.exists()) {
+      showMessage("Staging directory did not exist, creating...")
+
+      if (!stagingDir.mkdirs()) {
+        showMessage("Unable to generate preview: failed to create directory " +
+          "'${stagingDir.canonicalPath}'.")
+        return } }
+
+    // 2. Analyze staging directory
+    DirAnalysis stagingAnalysis = treediff.analyzeDir(stagingDir, null)
+
+    // 3. Organize metadata into treediff-compatible DirAnalysis 
+
+    // 4. Move links that point to continued files but are in the wrong paths
+
+    // 5. Create symlinks for files not present in the staging directory
+
+    // 6. Delete symlinks for files that no longer exist
+
+    // 7. Generate pages into staging directory.
+
+    // 8. Start Jetty (if not already running), point at staging directory.
+
+    // 9. Open a browser pointing to the Jetty instance
+
+  }
+
   private void advanceFocus(def e) {
     KeyboardFocusManager.currentKeyboardFocusManager.focusNextComponent()
   }
@@ -427,7 +487,7 @@ Missing image file:
     int nextIdx = currentImageIdx
     if (currentCategory.images.contains(currentImage)) nextIdx += 1
 
-    nextIdx = Math.min(currentCategory.images.size(), nextIdx)
+    nextIdx = Math.min(currentCategory.images.size() - 1, nextIdx)
     Image image = currentCategory.images[nextIdx]
 
     swing.edt {
@@ -446,6 +506,37 @@ Missing image file:
     categoryTreeModel.removeNodeFromParent(image.treeNode)
     newCategory.treeNode.add(image.treeNode)
     image.parent = newCategory
+  }
+
+  private void publish() {
+    // TODO: working here 2
+
+    showMessage("Opening a connection to the server...")
+    Session session = jsch.getSession(
+      config.server.user, config.server.host, config.server.port)
+    session.connect()
+    showMessage("Connected", MsgType.Success)
+
+    // 1. Analyze the target directory.
+    showMessage("Analyzing existing site...") 
+    ChannelExec analyze = (ChannelExec) session.openChannel("exec")
+    analyze.setCommand("treediff.groovy -o dbkphoto-analysis -q -Q " +
+      config.server.pathToRoot + " empty ")
+
+    analyze.setInputStream(null)
+
+
+    // 2. Organize local metadata into treediff-compatible DirAnalysis
+
+    // 3. Find differences.
+
+    // 4. Move files present under different paths
+
+    // 5. Upload files present locally not present on remote
+
+    // 6. Delete files present on remote but not locally
+
+
   }
 
   private void show() { rootFrame.show() }

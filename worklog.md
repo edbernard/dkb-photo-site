@@ -1,10 +1,15 @@
 DKB Photo Site
 ========================================
 
+Current
+----------------------------------------
+
+Working on preview functionality
 
 Remaining To Do
 ----------------------------------------
 
+* Drag-n-drop in UI
 * Create and use image thumbnails.
 * Finish styling the pages.
 * Add lightbox (microbox)
