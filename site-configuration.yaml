@@ -1,10 +1,8 @@
-albumsDirectory: '/home/jdbernard/temp/album-root'
+albumsDirectory: '/home/jdb/temp/album-root'
+stagingDirectory: '/home/jdb/temp/dkb-photo-site'
 imageFileExtensions: ['png', 'jpg', 'svg', 'jpeg', 'gif', 'tiff']
 thumbnailSize: [180, 180]
 pageTemplate: 'template/html/index.html'
-version:
-    minor: 0
-    major: 1
 title: >
     David K. Bernard - Nature Photogrphs ...
     Wildflowers, Wildlife, Trees, Fungi, Insects, Spiders
@@ -16,6 +14,12 @@ description: >
     several galleries of other locations. To see all the galleries, scroll down
     the home page, select from the categories at left, or select from the pages
     at top.
+server:
+  host: david.jdbernard.com
+  port: 22
+  user: dkbphotosite
+  identityFile: 'id_dkbphotosite'
+  pathToRoot: '/var/www/david.jdbernard.com'
 # The following is auto-generated from the above and doesn't need to be edited
 # manually
 imageFilenamePattern: ''
