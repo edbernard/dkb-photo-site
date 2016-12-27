@@ -1,16 +1,3 @@
-buildscript {
-  repositories {
-    mavenLocal()
-    mavenCentral()
-    maven { url 'http://oss.sonatype.org/content/groups/public/' }
-    jcenter()
-  }
-
-  dependencies {
-    classpath 'org.yaml:snakeyaml:1.16'
-  }
-}
-
 apply plugin: "java"
 apply plugin: "groovy"
 apply plugin: "application"
@@ -19,6 +6,7 @@ repositories {
   mavenLocal()
   mavenCentral()
   maven { url 'http://oss.sonatype.org/content/groups/public/' }
+  maven { url 'https://mvn.jdb-labs.com/repo/' }
   jcenter()
 }
 
@@ -29,37 +17,14 @@ dependencies {
   compile 'commons-codec:commons-codec:1.10'
   compile 'com.miglayout:miglayout-swing:5.0'
   compile 'net.java.dev.glazedlists:glazedlists_java15:1.9.1'
+  compile 'org.slf4j:slf4j-api:1.7.22'
+  compile 'ch.qos.logback:logback-classic:1.1.8'
+  compile 'ch.qos.logback:logback-core:1.1.8'
+  compile 'com.jdbernard:simple-groovy-server:2.0'
+  compile 'com.jcraft:jsch:0.1.54'
+  compile 'com.jdblabs:treediff:1.4.4'
 }
-
-import java.util.regex.Pattern
-import org.yaml.snakeyaml.Yaml
 
 group = "com.jdbernard"
 version = "1.0.0"
 mainClassName = "com.jdbernard.dkbphotosite.PhotoSiteManager"
-
-def siteConfigFile = new File('site-configuration.yaml')
-def yaml = new Yaml()
-def siteConfig
-
-task init(
-    group: 'build',
-    description: "Initialize the builder's properties and configuration.") << {
-
-    println "Initializing build system."
-    siteConfigFile.withInputStream { is -> siteConfig = yaml.load(is) }
-
-    // Recompute dynamic properties.
-    siteConfig.imageFilenamePattern = Pattern.compile(/(?i)^.+\.(/ +
-        siteConfig.imageFileExtensions.join('|') + /)$/)
-
-    ['build/webroot/css', 'build/webroot/js'].each { new File(it).mkdirs() }
-}
-
-task incVersion(
-    group: 'build',
-    description: 'Increment the site minor verison number.') << {
-
-    siteConfig.version.minor++;
-    siteConfigFile.withOutputStream { os -> yaml.dump(siteConfig, os) }
-}
