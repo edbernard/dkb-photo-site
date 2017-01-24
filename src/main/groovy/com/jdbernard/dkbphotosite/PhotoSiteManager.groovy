@@ -73,6 +73,7 @@ public class PhotoSiteManager {
   JTextPane loadingTextPane
   SimpleAttributeSet successMsgStyle
   SimpleAttributeSet errorMsgStyle
+  SimpleAttributeSet warnMsgStyle
 
   // Image card elements.
   ScalableImagePanel scaledImage
@@ -142,14 +143,29 @@ public class PhotoSiteManager {
     config.imageFilenamePattern = Pattern.compile(/(?i)^.+\.(/ +
       config.imageFileExtensions.join('|') + /)$/)
 
-    this.jsch.addIdentity(config.server.identityFile)
+    // TODO: don't just warn about this, fix it by generating new key material?
+    File identityFile = new File(config.server?.identityFile ?: "")
+    if (!identityFile.exists() || !identityFile.isFile()) {
+      showMessage("Unable to find the cryptographic identity file used to " +
+        "communicate securely with the server. Publish functionality will " +
+        "not work without a valid identity file.\n\nConfigured file " +
+        "location was ${config.server?.identityFile ?: 'not configured'}",
+        MsgType.Warning) }
+    else this.jsch.addIdentity(config.server.identityFile)
 
     if (seedFromFilesystem) {
-      imageDatabaseFile.createNewFile()
+      File albumsDir = new File(config.albumsDirectory)
+      if (!config.albumsDirectory || !albumsDir.exists() ||
+          !albumsDir.isDirectory()) {
+          showMessage("Cannot find the albums directory. Configured value " +
+            "was \"${config.albumsDirectory}\" but this is not a valid " +
+            "directory.", MsgType.Error) }
 
-      showMessage("Analyzing album directory for image information...")
-      rootCategory = Category.newWithMetaInDirname(config,
-        new File(config.albumsDirectory), null)
+      else  {
+        imageDatabaseFile.createNewFile()
+
+        showMessage("Analyzing album directory (${config.albumsDirectory}) for image information...")
+        rootCategory = Category.newWithMetaInDirname(config, albumsDir, null) }
     }
 
     else {
