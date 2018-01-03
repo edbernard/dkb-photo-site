@@ -1,0 +1,36 @@
+{
+  "Id": "DavidBernardPhotoSiteAccess",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowBucketReadAccess",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::063932952339:user/david.bernard"
+      },
+      "Action": [
+        "s3:GetBucketLocation",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::david.jdbernard.com"
+      ]
+    },
+    {
+      "Sid": "AllowFullControlOfObjects",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::063932952339:user/david.bernard"
+      },
+      "Action": [
+        "s3:Get*",
+        "s3:Put*",
+        "s3:Delete*",
+        "s3:List*"
+      ],
+      "Resource": [
+        "arn:aws:s3:::david.jdbernard.com/*"
+      ]
+    }
+  ]
+}
