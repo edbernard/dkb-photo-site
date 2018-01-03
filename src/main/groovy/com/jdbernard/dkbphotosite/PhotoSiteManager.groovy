@@ -63,6 +63,7 @@ public class PhotoSiteManager {
   def rightPanel
   CardLayout rightLayout
   JButton saveButton, cancelButton, previewButton, publishButton
+  JButton newCategoryButton, deleteCategoryButton
 
   // Loading card elements
   JTextPane loadingTextPane
@@ -78,6 +79,7 @@ public class PhotoSiteManager {
   AutoCompleteSupport categoryACS
 
   // Category card elements
+  JTextField categoryNameTF
   JTextArea categoryDescriptionTA
 
   enum MsgType { Success, Error, Normal, Warning }
@@ -180,16 +182,7 @@ public class PhotoSiteManager {
       def images = rootCategory.findImages(md5Hex)
 
       if (images.isEmpty()) {
-        def uncategorized = rootCategory.findCategory("Uncategorized")
-        if (!uncategorized) {
-          uncategorized = new Category(
-            parent: rootCategory,
-            name: "Uncategorized",
-            description: "Photos that have not yet been categorized.",
-            subcategories: [],
-            images: [])
-          rootCategory.subcategories << uncategorized
-        }
+        def uncategorized = getUncategorizedCategory()
 
         def image = new Image(
           parent: uncategorized,
@@ -240,27 +233,40 @@ public class PhotoSiteManager {
           oneTouchExpandable: true,
           constraints: "grow") {
 
-          scrollPane(constraints: "left") {
-            tcr = new DefaultTreeCellRenderer()
-            this.categoryTreeModel = new DefaultTreeModel(
-                new DefaultMutableTreeNode("Loading..."))
-            this.categoryTree = tree(
-              cellRenderer: tcr,
-              dragEnabled: true,
-              enabled: false,
-              model: this.categoryTreeModel,
-              valueChanged: { evt ->
-                def selectedObject = evt?.newLeadSelectionPath?.
-                  lastPathComponent?.userObject
+          vbox(constraints: "left") {
+            scrollPane() {
+              tcr = new DefaultTreeCellRenderer()
+              this.categoryTreeModel = new DefaultTreeModel(
+                  new DefaultMutableTreeNode("Loading..."))
+              this.categoryTree = tree(
+                cellRenderer: tcr,
+                dragEnabled: true,
+                enabled: false,
+                model: this.categoryTreeModel,
+                valueChanged: { evt ->
+                  def selectedObject = evt?.newLeadSelectionPath?.
+                    lastPathComponent?.userObject
 
-                if (!selectedObject) return;
-                else if (selectedObject instanceof Image)
-                  this.selectImage(selectedObject)
-                else if (selectedObject instanceof Category)
-                  this.selectCategory(selectedObject)
-              }
-            )
+                  if (!selectedObject) return;
+                  else if (selectedObject instanceof Image)
+                    this.selectImage(selectedObject)
+                  else if (selectedObject instanceof Category)
+                    this.selectCategory(selectedObject)
+                }
+              )
+            }
+
+            hbox() {
+              this.newCategoryButton = button(
+                label: "New Category", enabled: false,
+                actionPerformed: this.&newCategory )
+              hglue()
+              this.deleteCategoryButton = button(
+                label: "Delete Category", enabled: false,
+                actionPerformed: this.&deleteCategory)
+            }
           }
+
 
           vbox(constraints: "right") {
             this.rightPanel = panel() {
@@ -302,11 +308,19 @@ public class PhotoSiteManager {
               }
 
               panel(constraints: CATEGORY_CARD,
-                layout: new MigLayout("ins 10, wrap 1", "[fill, grow]",
-                  "[] 10 [grow, fill]")) {
-                label("Category Description: ")
+                layout: new MigLayout(
+                  "ins 10, wrap 2",                 // layout constraints
+                  "[left] 10 [fill, grow]",         // column constraints
+                  "[] 10 [] 10 [grow, fill]")) {    // row constraints
+                label("Category Name: ")
 
-                scrollPane() {
+                this.categoryNameTF = textField(
+                  actionPerformed: this.&advanceFocus)
+
+                label(constraints: "span", "Category Description: ")
+
+                vstrut()
+                scrollPane(constraints: "growx") {
                   this.categoryDescriptionTA = textArea(lineWrap: true,
                     wrapStyleWord: true)
                 }
@@ -336,10 +350,17 @@ public class PhotoSiteManager {
       this.publishButton.enabled = true
       this.categoryTreeModel = new DefaultTreeModel(makeNodeForCategory(this.rootCategory))
       this.categoryTree.model = this.categoryTreeModel
+
+      if (this.categoryACS && this.categoryACS.installed)
+        this.categoryACS.uninstall()
       this.categoryACS = AutoCompleteSupport.install(
         this.categoryCB, this.createCategoryList(rootCategory))
+
       this.categoryTree.enabled = true
     }
+
+    if (currentCategory)
+      currentCategory = rootCategory.findCategory(currentCategory.name)
   }
 
   // GUI Actions (Controller)
@@ -423,7 +444,11 @@ Missing image file:
       nextImage()
     }
 
-    else currentCategory.description = categoryDescriptionTA.text
+    else {
+      currentCategory.name = categoryNameTF.text
+      currentCategory.description = categoryDescriptionTA.text
+      categoryTreeModel.nodeChanged(currentCategory.treeNode)
+    }
 
     imageDatabaseFile.withWriter { writer ->
       yaml.dump(rootCategory.toStorageForm(), writer) }
@@ -474,16 +499,68 @@ Missing image file:
     KeyboardFocusManager.currentKeyboardFocusManager.focusNextComponent()
   }
 
+  private Category getUncategorizedCategory() {
+    def result = rootCategory.findCategory("Uncategorized")
+    if (!result) {
+      result = new Category(
+        parent: rootCategory,
+        name: "Uncategorized",
+        description: "Photos that have not yet been categorized.",
+        subcategories: [],
+        images: [])
+      rootCategory.subcategories << result
+      updateTreeRoot()
+    }
+
+    return result;
+  }
+
   private void selectCategory(Category category) {
     currentImage = null
     currentCategory = category
     saveButton.enabled = true
     cancelButton.enabled = true
+    newCategoryButton.enabled = true
+    deleteCategoryButton.enabled = true
 
     swing.edt {
       rightLayout.show(rightPanel, CATEGORY_CARD)
+      categoryNameTF.text = currentCategory.name
       categoryDescriptionTA.text = currentCategory.description
     }
+  }
+
+  private void newCategory(def evt) {
+    def parentCat = (currentCategory ?: rootCategory)
+    def newCat = new Category(
+      parent: parentCat,
+      name: "New Category",
+      description: "",
+      subcategories: [],
+      images: [])
+
+    parentCat.subcategories << newCat
+    updateTreeRoot()
+  }
+
+  private void deleteCategory(def evt) {
+    if (currentCategory == rootCategory) return
+
+    def destCat = currentCategory?.parent ?: getUncategorizedCategory()
+    if (destCat == rootCategory) destCat = getUncategorizedCategory()
+
+    currentCategory.images.each {
+      it.parent = destCat
+      destCat.images << it
+    }
+
+    currentCategory.subcategories.each {
+      it.parent = destCat
+      destCat.subcategories << it
+    }
+
+    currentCategory.parent.subcategories.remove(currentCategory)
+    updateTreeRoot()
   }
 
   private void nextImage() {
