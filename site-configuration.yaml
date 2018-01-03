@@ -2,7 +2,7 @@ albumsDirectory: '/home/jdb/temp/album-root'
 stagingDirectory: '/home/jdb/temp/dkb-photo-site'
 imageFileExtensions: ['png', 'jpg', 'svg', 'jpeg', 'gif', 'tiff']
 thumbnailSize: [180, 180]
-pageTemplate: 'template/html/index.html'
+pageTemplate: 'resources/main/template/html/index.html'
 title: >
     David K. Bernard - Nature Photogrphs ...
     Wildflowers, Wildlife, Trees, Fungi, Insects, Spiders
