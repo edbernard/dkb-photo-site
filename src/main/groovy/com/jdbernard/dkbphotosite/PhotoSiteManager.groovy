@@ -40,7 +40,7 @@ import org.yaml.snakeyaml.Yaml
 
 public class PhotoSiteManager {
 
-  public static final String VERSION = "1.0.0"
+  public static final String VERSION = "1.1.0"
 
   private static final Yaml yaml = new Yaml()
 
@@ -347,28 +347,28 @@ public class PhotoSiteManager {
     swing.edt {
       this.previewButton.enabled = true
       this.publishButton.enabled = true
-      this.categoryTreeModel = new DefaultTreeModel(categoryToNode(this.rootCategory))
+      this.categoryTreeModel = new DefaultTreeModel(makeNodeForCategory(this.rootCategory))
       this.categoryTree.model = this.categoryTreeModel
       this.categoryACS = AutoCompleteSupport.install(
-        this.categoryCB, this.getCategoryList(rootCategory))
+        this.categoryCB, this.createCategoryList(rootCategory))
       this.categoryTree.enabled = true
     }
   }
 
   // GUI Actions (Controller)
 
-  /// Given a image category, get the TreeNode that represents it in the UI.
-  private DefaultMutableTreeNode categoryToNode(Category cat) {
+  /// Given a image category, create a TreeNode that represents it in the UI.
+  private DefaultMutableTreeNode makeNodeForCategory(Category cat) {
     DefaultMutableTreeNode node = new DefaultMutableTreeNode(cat)
     cat.treeNode = node
-    cat.subcategories.each { subcat -> node.add(categoryToNode(subcat)) }
+    cat.subcategories.each { subcat -> node.add(makeNodeForCategory(subcat)) }
     cat.images.each { image ->
       image.treeNode = new DefaultMutableTreeNode(image)
       node.add(image.treeNode) }
     return node
   }
 
-  private BasicEventList<String> getCategoryList(Category category) {
+  private BasicEventList<String> createCategoryList(Category category) {
     BasicEventList<String> list = new BasicEventList<>();
 
     def catQueue = new LinkedList<Category>()
@@ -492,9 +492,9 @@ Missing image file:
     currentCategory = category
     saveButton.enabled = true
     cancelButton.enabled = true
-    rightLayout.show(rightPanel, CATEGORY_CARD)
 
     swing.edt {
+      rightLayout.show(rightPanel, CATEGORY_CARD)
       categoryDescriptionTA.text = currentCategory.description
     }
   }

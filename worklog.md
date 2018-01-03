@@ -18,10 +18,7 @@ Remaining To Do
 * Switch away from file-based metadata.
   Too many troubles with URL escaping.
 
-* Rsync-ish upload (diff and only upload
-  new content. Check file hashes and
-  rename files that have only changed
-  names).
+* Sync with S3.
 
 * Package for Dad:
 

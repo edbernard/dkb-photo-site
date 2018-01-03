@@ -11,6 +11,9 @@ import java.awt.Transparency;
 import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
 
+/**
+ * JPanel implementation that paints an image scaled to the size of the panel.
+ **/
 public class ScalableImagePanel extends JPanel {
 
     private Image master;

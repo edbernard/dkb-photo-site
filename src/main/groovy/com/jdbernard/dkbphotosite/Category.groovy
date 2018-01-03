@@ -3,6 +3,9 @@ package com.jdbernard.dkbphotosite
 import javax.swing.tree.TreeNode
 import groovy.beans.Bindable
 
+/**
+ * Data class for image categories.
+ */
 @Bindable
 public class Category {
 
@@ -16,32 +19,6 @@ public class Category {
 
   public List<Category> subcategories = []
   public List<Image> images = []
-
-  @Deprecated
-  public static Category newWithMetaInDirname(def siteConfig, File dir,
-    Category parent) {
-
-    File descFile = new File(dir, "description.txt")
-
-    Category cat = new Category(
-      siteConfig: siteConfig,
-      parent: parent,
-      name: dir.name,
-      description: descFile.exists() ? descFile.text : "",
-      relativePathToRoot: (parent?.relativePathToRoot ?: "") + "../")
-
-    cat.root = parent ? parent.root : cat
-
-    cat.images = dir.listFiles(
-      { f -> !f.isDirectory() && f.name ==~ siteConfig.imageFilenamePattern }
-        as FileFilter)
-      .collect { Image.newWithMetaInFilename(it, cat) }.sort { it.order }
-
-    cat.subcategories = dir.listFiles( { f -> f.isDirectory() } as FileFilter)
-        .collect { Category.newWithMetaInDirname(siteConfig, it, cat) }
-
-    return cat
-  }
 
   public static Category fromStorageForm(def siteConfig, def storedForm,
     Category parent) {
@@ -97,5 +74,32 @@ public class Category {
 
     return sb.toString()
   }
+
+  @Deprecated
+  public static Category newWithMetaInDirname(def siteConfig, File dir,
+    Category parent) {
+
+    File descFile = new File(dir, "description.txt")
+
+    Category cat = new Category(
+      siteConfig: siteConfig,
+      parent: parent,
+      name: dir.name,
+      description: descFile.exists() ? descFile.text : "",
+      relativePathToRoot: (parent?.relativePathToRoot ?: "") + "../")
+
+    cat.root = parent ? parent.root : cat
+
+    cat.images = dir.listFiles(
+      { f -> !f.isDirectory() && f.name ==~ siteConfig.imageFilenamePattern }
+        as FileFilter)
+      .collect { Image.newWithMetaInFilename(it, cat) }.sort { it.order }
+
+    cat.subcategories = dir.listFiles( { f -> f.isDirectory() } as FileFilter)
+        .collect { Category.newWithMetaInDirname(siteConfig, it, cat) }
+
+    return cat
+  }
+
 
 }

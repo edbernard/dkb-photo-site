@@ -4,6 +4,9 @@ import javax.swing.tree.TreeNode
 import org.apache.commons.codec.digest.DigestUtils
 import groovy.beans.Bindable
 
+/**
+ * Data-class for individual images.
+ */
 @Bindable
 public class Image {
 
@@ -17,22 +20,6 @@ public class Image {
 
   @Deprecated public String originalFileName
   @Deprecated public String order
-
-  @Deprecated
-  public static Image newWithMetaInFilename(File imageFile, Category parent) {
-    def nameParts = (imageFile.name.replaceAll(/\.\w+$/, '').split('!'))
-      .reverse() as LinkedList
-
-    return new Image(
-      parent: parent,
-      file: imageFile,
-      filename: imageFile.name,
-      commonName: nameParts.poll() ?: "",
-      scientificName: nameParts.poll() ?: "",
-      originalFileName: nameParts.poll() ?: "",
-      order: nameParts.poll() ?: "",
-      md5Hex: imageFile.withInputStream { DigestUtils.md5Hex(it) })
-  }
 
   public static Image fromStorageForm(def storedForm, Category parent) {
     return new Image(
@@ -56,4 +43,22 @@ public class Image {
     if (scientificName && commonName) sb.append(" - ")
     sb.append(commonName ?: "")
   }
+
+  @Deprecated
+  public static Image newWithMetaInFilename(File imageFile, Category parent) {
+    def nameParts = (imageFile.name.replaceAll(/\.\w+$/, '').split('!'))
+      .reverse() as LinkedList
+
+    return new Image(
+      parent: parent,
+      file: imageFile,
+      filename: imageFile.name,
+      commonName: nameParts.poll() ?: "",
+      scientificName: nameParts.poll() ?: "",
+      originalFileName: nameParts.poll() ?: "",
+      order: nameParts.poll() ?: "",
+      md5Hex: imageFile.withInputStream { DigestUtils.md5Hex(it) })
+  }
+
+
 }

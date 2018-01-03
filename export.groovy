@@ -6,7 +6,7 @@ exportPropFile = new File('export.properties')
 
 config = new Properties()
 
-if (!exportPropFile.exists()) 
+if (!exportPropFile.exists())
     println "Unable to find 'export.properties' file. Expect errors."
 else exportPropFile.withInputStream { is -> config.load(is); }
 
