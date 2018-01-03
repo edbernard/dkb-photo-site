@@ -52,9 +52,9 @@ public class Category {
     return this.subcategories.collect { it.findCategory(categoryName) }.find()
   }
 
-  public Image findImage(String md5Hex) {
-    return this.images.find { it.md5Hex == md5Hex } ?:
-      this.subcategories.collect { it.findImage(md5Hex) }.find()
+  public List<Image> findImages(String md5Hex) {
+    return this.images.findAll { it.md5Hex == md5Hex } ?:
+      this.subcategories.collect { it.findImages(md5Hex) }.flatten().findAll()
   }
 
   public boolean isDescendantOf(Category cat) {

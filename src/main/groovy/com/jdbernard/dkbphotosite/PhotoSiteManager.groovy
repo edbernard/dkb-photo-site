@@ -168,7 +168,7 @@ public class PhotoSiteManager {
   }
 
   private Map<String, Image> scanImages() {
-    Map<String, Image> images = new HashMap<>()
+    Map<String, Image> result = new HashMap<>()
 
     new File(config.albumsDirectory).eachFileRecurse(FileType.FILES) { f ->
       if (!(f.name ==~ config.imageFilenamePattern)) return
@@ -176,10 +176,10 @@ public class PhotoSiteManager {
       // Get the hash of the file
       String md5Hex = f.withInputStream { DigestUtils.md5Hex(it) }
 
-      // Try to find an image entry for that hash
-      def image = rootCategory.findImage(md5Hex)
+      // Find all images with that hash
+      def images = rootCategory.findImages(md5Hex)
 
-      if (!image) {
+      if (images.isEmpty()) {
         def uncategorized = rootCategory.findCategory("Uncategorized")
         if (!uncategorized) {
           uncategorized = new Category(
@@ -191,7 +191,7 @@ public class PhotoSiteManager {
           rootCategory.subcategories << uncategorized
         }
 
-        image = new Image(
+        def image = new Image(
           parent: uncategorized,
           commonName: f.name,
           scientificName: "")
@@ -199,12 +199,14 @@ public class PhotoSiteManager {
         uncategorized.images << image
       }
 
-      image.file = f
-      image.filename = f.name
-      images[md5Hex] = image
+      images.each { image ->
+        image.file = f
+        image.filename = f.name
+        result[md5Hex] = image
+      }
     }
 
-    return images
+    return result
   }
 
   // GUI Definition (View)
