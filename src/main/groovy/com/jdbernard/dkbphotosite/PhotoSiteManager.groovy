@@ -2,10 +2,6 @@ package com.jdbernard.dkbphotosite
 
 import ca.odell.glazedlists.BasicEventList
 import ca.odell.glazedlists.swing.AutoCompleteSupport
-import com.jcraft.jsch.JSch
-import com.jcraft.jsch.ChannelExec
-import com.jcraft.jsch.ChannelSftp
-import com.jcraft.jsch.Session
 import com.jdbernard.util.LightOptionParser
 import com.jdblabs.file.treediff.TreeDiff
 import com.jdblabs.file.treediff.DirAnalysis
@@ -47,7 +43,6 @@ public class PhotoSiteManager {
   def config
   File imageDatabaseFile
   SiteBuilder siteBuilder
-  JSch jsch = new JSch()
 
   // GUI Data (Model)
   @Bindable Category rootCategory
@@ -142,16 +137,6 @@ public class PhotoSiteManager {
 
     config.imageFilenamePattern = Pattern.compile(/(?i)^.+\.(/ +
       config.imageFileExtensions.join('|') + /)$/)
-
-    // TODO: don't just warn about this, fix it by generating new key material?
-    File identityFile = new File(config.server?.identityFile ?: "")
-    if (!identityFile.exists() || !identityFile.isFile()) {
-      showMessage("Unable to find the cryptographic identity file used to " +
-        "communicate securely with the server. Publish functionality will " +
-        "not work without a valid identity file.\n\nConfigured file " +
-        "location was ${config.server?.identityFile ?: 'not configured'}",
-        MsgType.Warning) }
-    else this.jsch.addIdentity(config.server.identityFile)
 
     if (seedFromFilesystem) {
       File albumsDir = new File(config.albumsDirectory)
@@ -527,20 +512,8 @@ Missing image file:
   private void publish() {
     // TODO: working here 2
 
-    showMessage("Opening a connection to the server...")
-    Session session = jsch.getSession(
-      config.server.user, config.server.host, config.server.port)
-    session.connect()
-    showMessage("Connected", MsgType.Success)
-
     // 1. Analyze the target directory.
-    showMessage("Analyzing existing site...") 
-    ChannelExec analyze = (ChannelExec) session.openChannel("exec")
-    analyze.setCommand("treediff.groovy -o dbkphoto-analysis -q -Q " +
-      config.server.pathToRoot + " empty ")
-
-    analyze.setInputStream(null)
-
+    showMessage("Analyzing existing site...")
 
     // 2. Organize local metadata into treediff-compatible DirAnalysis
 
