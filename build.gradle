@@ -11,8 +11,24 @@ repositories {
   mavenLocal()
   mavenCentral()
   maven { url 'http://oss.sonatype.org/content/groups/public/' }
-  maven { url 'https://mvn.jdb-labs.com/repo/' }
   jcenter()
+
+  maven {
+    url "s3://mvn.jdb-labs.com/releases"
+    credentials(AwsCredentials) {
+      accessKey AWS_ACCESS_KEY_ID
+      secretKey AWS_SECRET_KEY
+    }
+  }
+
+  maven {
+    url "s3://mvn.jdb-labs.com/snapshots"
+    credentials(AwsCredentials) {
+      accessKey AWS_ACCESS_KEY_ID
+      secretKey AWS_SECRET_KEY
+    }
+  }
+
 }
 
 dependencies {
