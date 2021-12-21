@@ -10,3 +10,4 @@
 ## Questions to ask
 
 * Add Comments?
+* Change the domain name from "david.jdbernard.com"?
