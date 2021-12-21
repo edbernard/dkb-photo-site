@@ -6,3 +6,5 @@ template/css/*.css
 *.class
 node_modules/
 export.properties
+.terraform
+terraform.tfstate.backup
