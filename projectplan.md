@@ -11,3 +11,4 @@
 
 * Add Comments?
 * Change the domain name from "david.jdbernard.com"?
+* Is the price out of the ballpark?
