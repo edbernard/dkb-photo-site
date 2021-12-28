@@ -6,10 +6,14 @@
     box-sizing: border-box;
 }
 
+html {
+  --base-font-size: 16px;
+}
+
 body {
     background-color: #555B67;
     font-family: 'Cairo', sans-serif;
-    font-size: 16px;
+    font-size: var(--base-font-size);
 }
 
 body.splash {
@@ -24,4 +28,28 @@ h1 {
     color: white;
     font-size: 4em;
     font-weight: 200;
+}
+
+/* Mobiles devices */
+@media screen and (max-width: 400px) {
+  html {
+    --base-font-size: 12px;
+  }
+
+  h1 { font-size: 3em;  }
+
+  body.splash h1 {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  body.splash h1 span:nth-child(2) { display: none; }
+}
+
+@media screen and (max-width: 1024px) and (min-width: 401px) {
+  html {
+		--base-font-size: 8px;
+  }
 }
