@@ -126,6 +126,12 @@ header {
   padding-left: 1rem;
 }
 
+footer {
+  color: #bbbbbb;
+  width: 100%;
+  text-align: center;
+}
+
 /* Mobiles devices */
 @media screen and (max-width: 400px) {
   html {
