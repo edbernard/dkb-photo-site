@@ -66,6 +66,23 @@ body.loading div.loading-splash {
   z-index: 100;
 }
 
+header {
+  margin: 2rem 3rem;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+}
+
+/* .description */
+.description {
+  margin-left: 3rem;
+  font-size: 1.25rem;
+  font-family: 'Cairo', sans-serif;
+  max-width: 54ch;
+}
+
 /* .categories */
 .categories {
   display: flex;
@@ -119,6 +136,8 @@ body.loading div.loading-splash {
     padding: 1em;
   }
 
+  header, .descrpition { margin: 0; }
+
   h1 {
     font-size: 3em;
     display: flex;
@@ -126,6 +145,8 @@ body.loading div.loading-splash {
     justify-content: center;
     align-items: center;
   }
+
+  h1 a { text-align: center; }
 
   h1 span:nth-child(2) { display: none; }
 
@@ -136,8 +157,8 @@ body.loading div.loading-splash {
 
   .categories a {
     margin: 1rem 0;
-    height: calc((100vw - 3rem) * 9 / 16);
-    width: calc(100vw - 3rem);
+    height: calc((100vw - 3rem) * 9 / 16 + 2px);
+    width: calc(100vw - 3rem + 2px);
   }
 
   .categories a img {
