@@ -39,6 +39,10 @@ resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
   comment = "OAI for DKB Photo Site."
 }
 
+resource "aws_s3_bucket_policy" "project" {
+  bucket = aws_s3_bucket.project.id
+  policy = data.aws_iam_policy_document.bucket_access_policy.json
+}
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
     domain_name = aws_s3_bucket.project.bucket_regional_domain_name
@@ -53,7 +57,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   enabled             = true
   is_ipv6_enabled     = true
   comment             = "DKB Photo Site distribution."
-  default_root_object = "/index.html"
+  default_root_object = "index.html"
 
   logging_config {
     include_cookies = false
