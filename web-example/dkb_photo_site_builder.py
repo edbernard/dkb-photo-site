@@ -16,11 +16,13 @@ from importlib_metadata import metadata
 # 1. Read the metadata file (this will give you a tree data structure)
 
 # 1a. Read the metadata file path from our first argument.
-if len(sys.argv) != 2:
-    print("this script expects 1 argument: path to the metadata file, quitting", file=sys.stderr)
+if len(sys.argv) != 3:
+    print("this script expects 2 arguments: path to the metadata file, " +
+        "and the root directory for the generated site, quitting", file=sys.stderr)
     quit(1)
     
 metadata_file_path = sys.argv[1]
+target_directory_root = sys.argv[2]
 
 # 1b. Check to see if the file exists.
 if not os.path.exists(metadata_file_path):
@@ -34,13 +36,26 @@ with open(metadata_file_path, 'r') as metadata_file:
     metadata = json.load(metadata_file)
 
 # 2. Walk the tree using depth first search.
-# For now, we're cheating, and just expecting the metadata itself to be a page_node
+def generate_category_page(page_node, target_directory):
+    # 2a. Check if the target directory exists, if not, create it
+    if not os.path.isdir(target_directory):
+        os.makedirs(target_directory)
+    
+    # 2b. Generate the HTML content
+    category_page_html = generate_category_page_html(page_node)
+    
+    # 2c. Save the HTML content to the 'index.html' file in the target directory.
+    # https://python.readthedocs.io/en/stable/library/functions.html#open
+    with open (target_directory + '/index.html', 'w') as index_file:
+        index_file.write(category_page_html)
+        
+    # 2d. Generate all the child categories
+    for child in page_node["child_categories"]:
+        generate_category_page(child, target_directory + "/" + child["slug"])
+
 
 # 3. For every node in the tree (except for leaves) create a page on the website
-def generate_category_page(page_node):
-    print("The category name is: ", page_node["category_name"], file=sys.stderr)
-    print("The category description is: ", page_node["description"], file=sys.stderr)
-    print("There are ", len(page_node["child_categories"]), " child categories in this one.", file=sys.stderr)
+def generate_category_page_html(page_node):
     html_text = """
 <!DOCTYPE html>
 <html>
@@ -76,6 +91,13 @@ def generate_category_page(page_node):
 
     html_text += """        </div>
 
+        <!-- Photos -->
+        <div class="photos">\n\n"""
+
+    for photo_url in page_node["photos"]:
+        html_text += '<img src="' + photo_url + '">'
+
+    html_text += """
         <footer>Created by Elijah Bernard</footer>
         <script type="application/javascript">
           window.onload = function() {
@@ -89,7 +111,7 @@ def generate_category_page(page_node):
     return html_text
 
 
-print(generate_category_page(metadata))
+generate_category_page(metadata, target_directory_root)
 
 
 # n = len(sys.argv)
