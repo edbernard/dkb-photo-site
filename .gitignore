@@ -8,3 +8,4 @@ node_modules/
 export.properties
 .terraform
 terraform.tfstate.backup
+/dkb_photo_site
