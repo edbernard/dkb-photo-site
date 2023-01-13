@@ -1,9 +1,12 @@
-import sys
-import os.path
+"""Test"""
 import json
+import os.path
+import sys
 import time
 
-from importlib_metadata import metadata
+import boto3
+
+#from importlib_metadata import metadata
 
 # Building the metadata file.
 # 1. Scan the directory of files.
@@ -11,6 +14,16 @@ from importlib_metadata import metadata
 #    2a. If there is no metadata on S3, create a new metadata file.
 # 3. Upload any new files to S3.
 # 4. Update the metadata file to include all files in the directory
+
+def build_local_metadata(source_directory):
+    """Build a metadata file based on the contents of the local filesystem."""
+
+    if not os.path.isdir(source_directory):
+
+
+def fetch_remote_metadata():
+    """Fetch the remote metadata file form S3."""
+    s3 = boto3.resource("s3")
 
 # Building the pages
 # 1. Read the metadata file (this will give you a tree data structure)
@@ -20,7 +33,7 @@ if len(sys.argv) != 3:
     print("this script expects 2 arguments: path to the metadata file, " +
         "and the root directory for the generated site, quitting", file=sys.stderr)
     quit(1)
-    
+
 metadata_file_path = sys.argv[1]
 target_directory_root = sys.argv[2]
 
@@ -37,18 +50,19 @@ with open(metadata_file_path, 'r') as metadata_file:
 
 # 2. Walk the tree using depth first search.
 def generate_category_page(page_node, target_directory):
+    """Generate the page for a top-level category."""
     # 2a. Check if the target directory exists, if not, create it
     if not os.path.isdir(target_directory):
         os.makedirs(target_directory)
-    
+
     # 2b. Generate the HTML content
     category_page_html = generate_category_page_html(page_node)
-    
+
     # 2c. Save the HTML content to the 'index.html' file in the target directory.
     # https://python.readthedocs.io/en/stable/library/functions.html#open
     with open (target_directory + '/index.html', 'w') as index_file:
         index_file.write(category_page_html)
-        
+
     # 2d. Generate all the child categories
     for child in page_node["child_categories"]:
         generate_category_page(child, target_directory + "/" + child["slug"])
@@ -56,6 +70,7 @@ def generate_category_page(page_node, target_directory):
 
 # 3. For every node in the tree (except for leaves) create a page on the website
 def generate_category_page_html(page_node):
+    """Generate the HTML for a category page."""
     html_text = """
 <!DOCTYPE html>
 <html>
@@ -67,7 +82,7 @@ def generate_category_page_html(page_node):
     <body>
         <script>document.body.classList.add("loading");</script>
         <div class="loading-splash">\n"""
-    
+
     html_text += "          <h1><span>David K. Bernard</span> <span>|</span> <span>" + page_node["category_name"] + "</span></h1>"
     html_text += """
         </div>
@@ -82,7 +97,7 @@ def generate_category_page_html(page_node):
 
         <!-- Catagories -->
         <div class="categories">\n\n"""
-        
+
     for child in page_node["child_categories"]:
         html_text += '          <a href="' + child["slug"] + '">\n'
         html_text += '              <img src="' + child["slug"] + '/' + child["cover_photo"] + '">\n'
@@ -112,19 +127,3 @@ def generate_category_page_html(page_node):
 
 
 generate_category_page(metadata, target_directory_root)
-
-
-# n = len(sys.argv)
-# print("Total arguments passed:", n)
-
-# print("\nName of Python Script", sys.argv[0])
-
-# print("\nArguments passed:", end = " ")
-# for i in range(1, n):
-#    print(sys.argv[i], end = " ")
-
-# Sum = 0
-# for i in range(1, n):
-#    Sum += int(sys.argv[i])
-
-#    print ("\n\nResult:", Sum)
